@@ -17,6 +17,5 @@ run-debug: debug
 
 clean:
 	rm a.out
-	rm *.o
-
+	rm server_storage/client.txt
 

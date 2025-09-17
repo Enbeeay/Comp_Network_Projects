@@ -99,6 +99,12 @@ void Client::connectToServer() {
     std::cout << "Client: Connected to server" << std::endl;
 }
 
+void Client::builtin_quit() {
+    close(this->s);
+    std::cout << "Client: Disconnected from server" << std::endl;
+    exit(0);
+}
+
 
 void Client::builtin_put(int argc, char* argv[]) {
     // CLI parsing group: local_path and optional remote_path
@@ -126,7 +132,6 @@ void Client::builtin_put(int argc, char* argv[]) {
 
     // Header group: send protocol header with path length and file size
     std::string header = std::string("put ") + std::to_string(strlen(remotePath)) + " " + std::to_string(fileSize) + "\n";\
-    std::cout << "header: " << header << std::endl;
     if (!sendAll(this->s, header.data(), header.size())) {
         std::cerr << "Failed to send PUT header" << std::endl;
         return;
@@ -273,6 +278,10 @@ void Client::registerCommands() {
     });
     this->commandHandler.registerCommand("get", [this](int argc, char* argv[]) {
         this->builtin_get(argc, argv);
+        return 0;
+    });
+    this->commandHandler.registerCommand("quit", [this](int argc, char* argv[]) {
+        this->builtin_quit();
         return 0;
     });
 }

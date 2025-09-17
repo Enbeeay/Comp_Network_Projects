@@ -27,14 +27,6 @@ void CommandHandler::executeCommand(char *command) const {
         token = strtok(nullptr, " \t\n");
     }
 
-    std::cout << "command: " << command << std::endl;
-    std::cout << "argc: " << argc << std::endl;
-    std::cout << "argv: ";
-    for (int i = 0; i < argc; i++) {
-        std::cout << argv[i] << ",";
-    }
-    std::cout << std::endl;
-
     // 2) Validation: ensure at least a command token exists
     if (argc == 0) {
         free(cmd_copy);
@@ -63,14 +55,11 @@ void CommandHandler::executeCommand(char *command) const {
     for (int i = 0; i < argc; i++) {
         argv_data[i] = argv[i];
     }
-    std::cout << argv_data[0] << std::endl;
     // 4) Execute the command
     func(argc, argv_data);
-    std::cout << "command executed" << std::endl;
     
     // 5) Cleanup: free duplicated buffer and argv array
     free(cmd_copy);
-    std::cout << "memory freed" << std::endl;
     delete[] argv_data;
 }
 

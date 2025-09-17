@@ -39,7 +39,7 @@ class Client {
         void builtin_get(int argc, char* argv[]);
         void connectToServer();
         void mainloop();
-
+        void builtin_quit();
 };
 
 #endif // CLIENT_H

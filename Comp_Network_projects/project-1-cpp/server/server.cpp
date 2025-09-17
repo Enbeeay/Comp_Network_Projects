@@ -41,7 +41,6 @@ void Server::registerCommands() {
 }
 
 void Server::builtin_put(int argc, char* argv[]) {
-    std::cout << "builtin_put" << std::endl;
     // Header parsing group: extract pathLen and fileSize
     if (argc < 3) { std::string err = "ERR 400 bad_header\n"; sendAll(this->clientSocket, err.data(), err.size()); return; }
     char* end1 = nullptr; char* end2 = nullptr;
@@ -63,10 +62,10 @@ void Server::builtin_put(int argc, char* argv[]) {
     if (!writeFileFromSocket(this->clientSocket, safePath, fileSize)) { std::string err = "ERR 500 write_failed\n"; sendAll(this->clientSocket, err.data(), err.size()); return; }
     std::string ok = "OK\n";
     sendAll(this->clientSocket, ok.data(), ok.size());
+    std::cout << "PUT ok " << safePath << " (" << fileSize << " bytes)" << std::endl;
 }
 
 void Server::builtin_get(int argc, char* argv[]) {
-    std::cout << "builtin_get" << std::endl;
     // Header parsing group: extract pathLen
     if (argc < 2) { std::string err = "ERR 400 bad_header\n"; sendAll(this->clientSocket, err.data(), err.size()); return; }
     char* end = nullptr;
@@ -86,11 +85,16 @@ void Server::builtin_get(int argc, char* argv[]) {
     std::string ok = std::string("OK ") + std::to_string(fileSize) + "\n";
     if (!sendAll(this->clientSocket, ok.data(), ok.size())) return;
     if (!sendFileToSocket(this->clientSocket, safePath)) return;
+    std::cout << "GET ok " << safePath << " (" << fileSize << " bytes)" << std::endl;
 }
 
 
 // Socket setup: create, configure, bind, and listen
 void Server::setup() {
+    if ((this->listenSocket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("simplex-talk: socket");
+        exit(1);
+    }
     int opt = 1;
     if (setsockopt(this->listenSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
         perror("setsockopt SO_REUSEADDR");
@@ -100,15 +104,15 @@ void Server::setup() {
         perror("setsockopt SO_REUSEPORT");
     }
     #endif
-    if ((this->listenSocket = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
-        perror("simplex-talk: socket");
-        exit(1);
-    }
     if ((bind(this->listenSocket, (struct sockaddr *)&this->sin, sizeof(this->sin))) < 0) {
         perror("simplex-talk: bind");
         exit(1);
     }
-    listen(this->listenSocket, MAX_PENDING);
+    if (listen(this->listenSocket, MAX_PENDING) < 0) {
+        perror("simplex-talk: listen");
+        exit(1);
+    }
+    std::cout << "Server listening on " << SERVER_PORT << "..." << std::endl;
 }
 
 // Main loop: accept a client and process header lines via CommandHandler
@@ -122,24 +126,24 @@ void Server::run() {
             exit(1);
         }
 
+        std::cout << "Client connected." << std::endl;
+
         while (true) {
             std::string header;
             if (!this->recvLine(this->clientSocket, header)) break;
 
-
-            std::cout << "header: " << header << std::endl;
+            std::cout << "Received: " << header << std::endl;
             std::istringstream iss(header);
             std::string cmd;
             iss >> cmd;
-            std::cout << "cmd: " << cmd << std::endl;
             // copy cmd
             char* header_copy = strdup(header.c_str());
-            std::cout << "header_copy: " << header_copy << std::endl;
             this->commandHandler.executeCommand(header_copy);
             free(header_copy);
 
         }
 
+        std::cout << "Client disconnected." << std::endl;
         close(this->clientSocket);
         this->clientSocket = -1;
     }
@@ -236,5 +240,6 @@ int main() {
     server.run();
     return 0;
 }
+
 
 

@@ -12,7 +12,7 @@ run-debug: debug
 
 clean: 
 	rm a.out
-	rm *.o
+	rm client_storage/server.txt
 
 # exClient: exClient.cpp
 # 	g++ exClient.cpp -o exClient
