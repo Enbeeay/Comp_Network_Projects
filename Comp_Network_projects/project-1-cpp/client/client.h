@@ -22,11 +22,13 @@ class Client {
         FILE *fp;
         struct hostent *hp;
         struct sockaddr_in sin;
-        char *host;
+        char *proxyHost;
         char buf[MAX_LINE];
         int s;
         int len;
         CommandHandler commandHandler;
+        char* destHost;
+        int destPort;
 
     public:
         Client() = default;

@@ -5,10 +5,10 @@ debug: client.cpp client.h ../common/CommandHandler.cpp ../common/CommandHandler
 	g++ -g -DDEBUG client.cpp ../common/CommandHandler.cpp -o a.out
 
 run: a.out
-	./a.out localhost
+	./a.out 127.0.0.1:5555 --dest-host 127.0.0.1 --dest-port 5432
 
 run-debug: debug
-	./a.out localhost
+	./a.out 127.0.0.1:5555 --dest-host 127.0.0.1 --dest-port 5432
 
 clean: 
 	rm a.out

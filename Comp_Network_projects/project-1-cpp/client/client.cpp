@@ -67,26 +67,47 @@ static bool recvLine(int sock, std::string &out) {
     return true;
 }
 
-Client::Client(int argc, char* argv[]) {
-    if (argc == 2) {
-        host = argv[1];
+char* findFlag(char** argv, int argc, const char* flag) {
+    for (int i = 0; i < argc; i++) {
+        if (strcmp(argv[i], flag) == 0) {
+            return argv[i + 1];
+        }
     }
-    else {
-        std::cerr << "usage: simplex-talk host" << std::endl;
+    return nullptr;
+}
+
+Client::Client(int argc, char* argv[]) {
+
+    this->proxyHost = argv[1];
+    this->destPort = 0;
+    try {
+        // Required flags
+        this->destHost = findFlag(argv, argc, "--dest-host");
+        this->destPort = std::stoi(findFlag(argv, argc, "--dest-port"));
+    
+        if (this->destHost == nullptr || this->destPort == 0) {
+            throw std::runtime_error("usage: simplex-talk <proxy-host> --dest-host <host> --dest-port <port>");
+            exit(1);
+        }
+    }
+    catch (const std::exception& e) {
+        std::cerr << "usage: simplex-talk <proxy-host> --dest-host <host> --dest-port <port>" << std::endl;
+        std::cerr << "Error: " << e.what() << std::endl;
         exit(1);
     }
 }
 
 void Client::connectToServer() {
-    this->hp = gethostbyname(this->host);
+    this->hp = gethostbyname(this->destHost);
     if (!this->hp) {
-        std::cerr << "simplex-talk: unknown host: " << this->host << std::endl;
+        std::cerr << "simplex-talk: unknown host: " << this->destHost << std::endl;
         exit(1);
     }
     bzero((char *)&this->sin, sizeof(this->sin));
     this->sin.sin_family = AF_INET;
     bcopy(this->hp->h_addr, (char *)&this->sin.sin_addr, this->hp->h_length);
-    this->sin.sin_port = htons(SERVER_PORT);
+    // convert port to integer
+    this->sin.sin_port = htons(this->destPort);    
     if ((this->s = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
         perror("simplex-talk: socket");
         exit(1);
